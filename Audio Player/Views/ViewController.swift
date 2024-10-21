@@ -13,16 +13,17 @@ class ViewController: UIViewController {
     private let titleLabel = Label(text: "Tap on any option to play relevant audio", textAlignment: .center)
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
-        tableView.register(OptionsTableViewCell.self, forCellReuseIdentifier: OptionsTableViewCell.identifier)
+        tableView.register(OptionsTableViewCell.self, forCellReuseIdentifier: OptionsTableViewCell.tableViewIdentifier)
         tableView.dataSource = self
         tableView.delegate = self
         tableView.separatorStyle = .none
         tableView.showsVerticalScrollIndicator = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.backgroundColor = .clear
+        tableView.tintColor = .clear
         return tableView
     }()
-    private let options: [Options] = [.init(title: "Nature"), .init(title: "Bird"), .init(title: "Water"), .init(title: "City"), .init(title: "Forest")]
+    private let options: [Options] = [.init(title: "Nature"), .init(title: "Bird"), .init(title: "Water"), .init(title: "City"), .init(title: "Forest"), .init(title: "Garden")]
     
     // MARK: - Overriden Functions
     override func viewDidLoad() {
@@ -32,7 +33,7 @@ class ViewController: UIViewController {
     
     // MARK: - Functions
     private func setupUI() {
-        view.backgroundColor = .systemGray4
+        view.backgroundColor = .systemMint
         view.addSubview(titleLabel)
         view.addSubview(tableView)
         
@@ -56,31 +57,19 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
         return options.count
     }
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: OptionsTableViewCell.identifier, for: indexPath) as! OptionsTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: OptionsTableViewCell.tableViewIdentifier, for: indexPath) as! OptionsTableViewCell
         cell.options = options[indexPath.row]
+        cell.selectionStyle = .none
         return cell
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let audioViewController = AudioPlayViewController()
-        
-        switch options[indexPath.row].title {
-        case "Nature":
-            audioViewController.audioFileName = "nature"
-        case "Bird":
-            audioViewController.audioFileName = "bird"
-        case "Water":
-            audioViewController.audioFileName = "flowing_water"
-        case "City":
-            audioViewController.audioFileName = "city_at_night"
-        case "Forest":
-            audioViewController.audioFileName = "forest"
-        default:
-            break
-        }
+        let selectedOption = options[indexPath.row]
+        audioViewController.audioFileName = selectedOption.title.lowercased()
         navigationController?.pushViewController(audioViewController, animated: true)
     }
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 70
+        return 70.autoSized
     }
 }

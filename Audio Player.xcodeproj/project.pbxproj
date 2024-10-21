@@ -19,12 +19,15 @@
 		5902980C2CB51DE5000956F3 /* OptionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5902980B2CB51DE5000956F3 /* OptionsTableViewCell.swift */; };
 		5902980F2CB52F4F000956F3 /* Options.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5902980E2CB52F4F000956F3 /* Options.swift */; };
 		590298262CB545ED000956F3 /* bird.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 590298202CB545ED000956F3 /* bird.mp3 */; };
-		590298272CB545ED000956F3 /* city_at_night.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 590298212CB545ED000956F3 /* city_at_night.mp3 */; };
-		590298282CB545ED000956F3 /* flowing_water.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 590298222CB545ED000956F3 /* flowing_water.mp3 */; };
+		590298272CB545ED000956F3 /* city.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 590298212CB545ED000956F3 /* city.mp3 */; };
+		590298282CB545ED000956F3 /* water.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 590298222CB545ED000956F3 /* water.mp3 */; };
 		590298292CB545ED000956F3 /* nature.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 590298232CB545ED000956F3 /* nature.mp3 */; };
 		5902982A2CB545ED000956F3 /* forest.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 590298242CB545ED000956F3 /* forest.mp3 */; };
 		5902982C2CB54633000956F3 /* AudioPlayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5902982B2CB54633000956F3 /* AudioPlayViewController.swift */; };
+		5940A8182CC0D0A80047BB37 /* OptionsCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5940A8172CC0D0A80047BB37 /* OptionsCollectionViewCell.swift */; };
+		5940A81A2CC0E8420047BB37 /* garden.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 5940A8192CC0E8420047BB37 /* garden.mp3 */; };
 		595BA0992CBD2A8A0066B044 /* Int.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595BA0982CBD2A8A0066B044 /* Int.swift */; };
+		59E86E982CC60F7600EFA0B6 /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E86E972CC60F7600EFA0B6 /* Color.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,12 +45,15 @@
 		5902980B2CB51DE5000956F3 /* OptionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsTableViewCell.swift; sourceTree = "<group>"; };
 		5902980E2CB52F4F000956F3 /* Options.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Options.swift; sourceTree = "<group>"; };
 		590298202CB545ED000956F3 /* bird.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = bird.mp3; sourceTree = "<group>"; };
-		590298212CB545ED000956F3 /* city_at_night.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = city_at_night.mp3; sourceTree = "<group>"; };
-		590298222CB545ED000956F3 /* flowing_water.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = flowing_water.mp3; sourceTree = "<group>"; };
+		590298212CB545ED000956F3 /* city.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = city.mp3; sourceTree = "<group>"; };
+		590298222CB545ED000956F3 /* water.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = water.mp3; sourceTree = "<group>"; };
 		590298232CB545ED000956F3 /* nature.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = nature.mp3; sourceTree = "<group>"; };
 		590298242CB545ED000956F3 /* forest.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = forest.mp3; sourceTree = "<group>"; };
 		5902982B2CB54633000956F3 /* AudioPlayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayViewController.swift; sourceTree = "<group>"; };
+		5940A8172CC0D0A80047BB37 /* OptionsCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsCollectionViewCell.swift; sourceTree = "<group>"; };
+		5940A8192CC0E8420047BB37 /* garden.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = garden.mp3; sourceTree = "<group>"; };
 		595BA0982CBD2A8A0066B044 /* Int.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Int.swift; sourceTree = "<group>"; };
+		59E86E972CC60F7600EFA0B6 /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +117,7 @@
 				590297E42CB50693000956F3 /* ViewController.swift */,
 				5902982B2CB54633000956F3 /* AudioPlayViewController.swift */,
 				5902980B2CB51DE5000956F3 /* OptionsTableViewCell.swift */,
+				5940A8172CC0D0A80047BB37 /* OptionsCollectionViewCell.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -127,8 +134,9 @@
 			isa = PBXGroup;
 			children = (
 				590298202CB545ED000956F3 /* bird.mp3 */,
-				590298212CB545ED000956F3 /* city_at_night.mp3 */,
-				590298222CB545ED000956F3 /* flowing_water.mp3 */,
+				590298212CB545ED000956F3 /* city.mp3 */,
+				5940A8192CC0E8420047BB37 /* garden.mp3 */,
+				590298222CB545ED000956F3 /* water.mp3 */,
 				590298232CB545ED000956F3 /* nature.mp3 */,
 				590298242CB545ED000956F3 /* forest.mp3 */,
 			);
@@ -139,6 +147,7 @@
 			isa = PBXGroup;
 			children = (
 				595BA0982CBD2A8A0066B044 /* Int.swift */,
+				59E86E972CC60F7600EFA0B6 /* Color.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -201,10 +210,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				590298282CB545ED000956F3 /* flowing_water.mp3 in Resources */,
+				590298282CB545ED000956F3 /* water.mp3 in Resources */,
+				5940A81A2CC0E8420047BB37 /* garden.mp3 in Resources */,
 				590297EA2CB50695000956F3 /* Assets.xcassets in Resources */,
 				590297ED2CB50695000956F3 /* Base in Resources */,
-				590298272CB545ED000956F3 /* city_at_night.mp3 in Resources */,
+				590298272CB545ED000956F3 /* city.mp3 in Resources */,
 				590298292CB545ED000956F3 /* nature.mp3 in Resources */,
 				5902982A2CB545ED000956F3 /* forest.mp3 in Resources */,
 				590298262CB545ED000956F3 /* bird.mp3 in Resources */,
@@ -220,7 +230,9 @@
 			files = (
 				590298092CB51496000956F3 /* Button.swift in Sources */,
 				590298052CB51496000956F3 /* ImageView.swift in Sources */,
+				5940A8182CC0D0A80047BB37 /* OptionsCollectionViewCell.swift in Sources */,
 				590297E52CB50693000956F3 /* ViewController.swift in Sources */,
+				59E86E982CC60F7600EFA0B6 /* Color.swift in Sources */,
 				5902982C2CB54633000956F3 /* AudioPlayViewController.swift in Sources */,
 				590298082CB51496000956F3 /* View.swift in Sources */,
 				5902980F2CB52F4F000956F3 /* Options.swift in Sources */,

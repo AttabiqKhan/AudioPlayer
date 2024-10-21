@@ -1,18 +1,18 @@
 //
-//  OptionsTableViewCell.swift
+//  CollectionViewCell.swift
 //  Audio Player
 //
-//  Created by Attabiq Khan on 08/10/2024.
+//  Created by Attabiq Khan on 17/10/2024.
 //
 
 import Foundation
 import UIKit
 
-class OptionsTableViewCell: UITableViewCell {
+class OptionsCollectionViewCell: UICollectionViewCell {
     
     // MARK: - Variables
-    static let tableViewIdentifier = "Cell"
-    private let containerView = View(backgroundColor: .dimWhite, cornerRadius: 18)
+    static let collectionViewIdentifier = "Cell"
+    private let containerView = View(backgroundColor: .dimWhite, cornerRadius: 20)
     private let optionsTitle = Label(text: "A")
     private let chevronImageView: UIImageView = {
         let iv = UIImageView()
@@ -28,32 +28,30 @@ class OptionsTableViewCell: UITableViewCell {
     }
     
     // MARK: - Initializers
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupCell()
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupViews()
     }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     // MARK: - Functions
-    private func setupCell() {
-        backgroundColor = .clear
-        tintColor = .clear
+    private func setupViews() {
         contentView.addSubview(containerView)
         containerView.addSubview(optionsTitle)
         containerView.addSubview(chevronImageView)
         
         NSLayoutConstraint.activate([
-            containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            containerView.heightAnchor.constraint(equalToConstant: 50.autoSized),
-            containerView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -15.autoSized),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10.autoSized),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10.autoSized),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10.autoSized),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10.autoSized),
             
-            optionsTitle.centerXAnchor.constraint(equalTo: containerView.centerXAnchor, constant: -80.autoSized),
+            optionsTitle.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             optionsTitle.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             
-            chevronImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20.widthRatio),
+            chevronImageView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor, constant: 40.autoSized),
             chevronImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             chevronImageView.widthAnchor.constraint(equalToConstant: 18.widthRatio),
             chevronImageView.heightAnchor.constraint(equalToConstant: 18.autoSized),

@@ -42,6 +42,16 @@ class AudioPlayViewController: UIViewController {
         slider.addTarget(self, action: #selector(didChangeVolume(_:)), for: .valueChanged)
         return slider
     }()
+    private lazy var secondaryVolumeSlider: UISlider = {
+        let slider = UISlider()
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.minimumValue = 0
+        slider.maximumValue = 1
+        slider.value = 0.5
+        slider.tintColor = .black
+        slider.addTarget(self, action: #selector(didChangeSecondaryVolume(_:)), for: .valueChanged)
+        return slider
+    }()
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = CGSize(width: 150.autoSized, height: 120.autoSized)
@@ -54,23 +64,24 @@ class AudioPlayViewController: UIViewController {
         return collectionView
     }()
     private var player: AVAudioPlayer!
-    private var players: [String: AVAudioPlayer] = [:]
+    private lazy var players: [AVAudioPlayer?] = Array(repeating: nil, count: options.count)
     private let options: [Options] = [.init(title: "Nature"), .init(title: "Bird"), .init(title: "Water"), .init(title: "City"), .init(title: "Forest"), .init(title: "Garden")]
     
     // MARK: - Overridden Functions
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupView()
+        setupUI()
         setupAudioSession()
         playInitialAudio()
     }
     
     // MARK: - Functions
-    private func setupView() {
+    private func setupUI() {
         view.backgroundColor = .systemMint
         view.addSubview(backButton)
         view.addSubview(playPauseButton)
         view.addSubview(volumeSlider)
+        view.addSubview(secondaryVolumeSlider)
         view.addSubview(collectionView)
         
         NSLayoutConstraint.activate([
@@ -89,7 +100,12 @@ class AudioPlayViewController: UIViewController {
             volumeSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20.widthRatio),
             volumeSlider.heightAnchor.constraint(equalToConstant: 30.autoSized),
             
-            collectionView.topAnchor.constraint(equalTo: volumeSlider.bottomAnchor, constant: 50.autoSized),
+            secondaryVolumeSlider.topAnchor.constraint(equalTo: volumeSlider.bottomAnchor, constant: 30.autoSized),
+            secondaryVolumeSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20.widthRatio),
+            secondaryVolumeSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20.widthRatio),
+            secondaryVolumeSlider.heightAnchor.constraint(equalToConstant: 30.autoSized),
+            
+            collectionView.topAnchor.constraint(equalTo: secondaryVolumeSlider.bottomAnchor, constant: 50.autoSized),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20.widthRatio),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20.widthRatio),
@@ -115,25 +131,26 @@ class AudioPlayViewController: UIViewController {
             print("Error initializing player: \(error.localizedDescription)")
         }
     }
-    private func playSound(for option: String) {
-        if let player = players[option], player.isPlaying {
+    private func playSound(for index: Int) {
+        if let player = players[index], player.isPlaying {
             player.pause()
         } else {
-            if players[option] == nil {
+            if players[index] == nil {
+                let option = options[index].title.lowercased()
                 guard let url = Bundle.main.url(forResource: option, withExtension: "mp3") else {
                     print("Audio file not found for option: \(option)")
                     return
                 }
                 do {
                     let newPlayer = try AVAudioPlayer(contentsOf: url)
-                    newPlayer.volume = volumeSlider.value
-                    players[option] = newPlayer
+                    newPlayer.volume = secondaryVolumeSlider.value
+                    players[index] = newPlayer
                     newPlayer.play()
                 } catch {
                     print("Error initializing player for option \(option): \(error.localizedDescription)")
                 }
             } else {
-                players[option]?.play()
+                players[index]?.play()
             }
         }
     }
@@ -159,7 +176,9 @@ class AudioPlayViewController: UIViewController {
     }
     @objc private func didChangeVolume(_ sender: UISlider) {
         player?.volume = sender.value
-        players.values.forEach { $0.volume = sender.value }  // Update volume for all players
+    }
+    @objc private func didChangeSecondaryVolume(_ sender: UISlider) {
+        players.forEach { $0?.volume = sender.value }  // Update volume for all players in collection view
     }
 }
 
@@ -174,8 +193,7 @@ extension AudioPlayViewController: UICollectionViewDataSource, UICollectionViewD
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let optionTitle = options[indexPath.item].title
-        let selectedOption = optionTitle.lowercased()
-        playSound(for: selectedOption)
+        let value = indexPath.item
+        playSound(for: value)
     }
 }

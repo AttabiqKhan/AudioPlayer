@@ -12,7 +12,7 @@ class OptionsTableViewCell: UITableViewCell {
     
     // MARK: - Variables
     static let tableViewIdentifier = "Cell"
-    private let containerView = View(backgroundColor: .dimWhite, cornerRadius: 18)
+    private let containerView = View(backgroundColor: .dimWhite, cornerRadius: 18.autoSized)
     private let optionsTitle = Label(text: "A")
     private let chevronImageView: UIImageView = {
         let iv = UIImageView()

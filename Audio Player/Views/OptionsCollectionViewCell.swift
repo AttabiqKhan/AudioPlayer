@@ -14,13 +14,6 @@ class OptionsCollectionViewCell: UICollectionViewCell {
     static let collectionViewIdentifier = "Cell"
     private let containerView = View(backgroundColor: .dimWhite, cornerRadius: 20)
     private let optionsTitle = Label(text: "A")
-    private let chevronImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        iv.image = UIImage(systemName: "chevron.right")
-        iv.tintColor = .black
-        return iv
-    }()
     var options: Options? {
         didSet {
             self.optionsTitle.text = options?.title
@@ -40,7 +33,6 @@ class OptionsCollectionViewCell: UICollectionViewCell {
     private func setupViews() {
         contentView.addSubview(containerView)
         containerView.addSubview(optionsTitle)
-        containerView.addSubview(chevronImageView)
         
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10.autoSized),
@@ -50,11 +42,6 @@ class OptionsCollectionViewCell: UICollectionViewCell {
             
             optionsTitle.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             optionsTitle.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            
-            chevronImageView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor, constant: 40.autoSized),
-            chevronImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            chevronImageView.widthAnchor.constraint(equalToConstant: 18.widthRatio),
-            chevronImageView.heightAnchor.constraint(equalToConstant: 18.autoSized),
         ])
     }
 }

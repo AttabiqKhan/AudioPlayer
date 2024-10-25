@@ -10,7 +10,11 @@ import UIKit
 class ViewController: UIViewController {
     
     // MARK: - Variables
-    private let titleLabel = Label(text: "Tap on any option to play relevant audio", textAlignment: .center)
+    private let titleLabel = Label(
+        text: "Tap on any option to play relevant audio",
+        textAlignment: .center,
+        textColor: .textPrimary
+    )
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.register(OptionsTableViewCell.self, forCellReuseIdentifier: OptionsTableViewCell.tableViewIdentifier)
@@ -23,7 +27,14 @@ class ViewController: UIViewController {
         tableView.tintColor = .clear
         return tableView
     }()
-    private let options: [Options] = [.init(title: "Nature"), .init(title: "Bird"), .init(title: "Water"), .init(title: "City"), .init(title: "Forest"), .init(title: "Garden")]
+    private let options: [Options] = [
+        .init(title: "Nature"),
+        .init(title: "Bird"),
+        .init(title: "Water"),
+        .init(title: "City"),
+        .init(title: "Forest"),
+        .init(title: "Garden")
+    ]
     
     // MARK: - Overriden Functions
     override func viewDidLoad() {
@@ -33,7 +44,8 @@ class ViewController: UIViewController {
     
     // MARK: - Functions
     private func setupUI() {
-        view.backgroundColor = .systemMint
+        view.addGradient(colors: [.secondary, .midGradient, .background], locations: [0.0, 0.6, 1.0])
+        view.backgroundColor = .background
         view.addSubview(titleLabel)
         view.addSubview(tableView)
         
@@ -60,6 +72,11 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: OptionsTableViewCell.tableViewIdentifier, for: indexPath) as! OptionsTableViewCell
         cell.options = options[indexPath.row]
         cell.selectionStyle = .none
+        cell.layer.cornerRadius = 12
+        cell.layer.shadowColor = UIColor.primary.cgColor
+        cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+        cell.layer.shadowOpacity = 0.1
+        cell.layer.shadowRadius = 4
         return cell
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

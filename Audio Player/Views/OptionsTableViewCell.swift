@@ -12,8 +12,15 @@ class OptionsTableViewCell: UITableViewCell {
     
     // MARK: - Variables
     static let tableViewIdentifier = "Cell"
-    private let containerView = View(backgroundColor: .dimWhite, cornerRadius: 18.autoSized)
-    private let optionsTitle = Label(text: "A")
+    private let containerView = View(
+        backgroundColor: .dimWhite,
+        cornerRadius: 18.autoSized
+    )
+    private let optionsTitle = Label(
+        text: "A",
+        textAlignment: .center,
+        textColor: .textPrimary
+    )
     private let chevronImageView: UIImageView = {
         let iv = UIImageView()
         iv.translatesAutoresizingMaskIntoConstraints = false

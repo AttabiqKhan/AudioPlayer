@@ -14,7 +14,7 @@ class AudioPlayViewController: UIViewController {
     private lazy var backButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "arrowshape.backward.fill"), for: .normal)
-        button.tintColor = .black
+        button.tintColor = .primary
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(didTapBackButton), for: .touchUpInside)
         return button
@@ -25,11 +25,15 @@ class AudioPlayViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setImage(UIImage(systemName: "pause.fill"), for: .normal)
         button.tintColor = .white
-        button.backgroundColor = .black
+        button.backgroundColor = .primary
         button.layer.cornerRadius = 40.autoSized
         button.layer.borderWidth = 2.autoSized
         button.layer.borderColor = UIColor.white.cgColor
         button.addTarget(self, action: #selector(didTapPlayPauseButton), for: .touchUpInside)
+        button.layer.shadowColor = UIColor.accent.cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 4)
+        button.layer.shadowOpacity = 0.3
+        button.layer.shadowRadius = 8
         return button
     }()
     private lazy var volumeSlider: UISlider = {
@@ -38,7 +42,8 @@ class AudioPlayViewController: UIViewController {
         slider.minimumValue = 0
         slider.maximumValue = 1
         slider.value = 0.5
-        slider.tintColor = .black
+        slider.tintColor = .primary
+        slider.thumbTintColor = .primary
         slider.addTarget(self, action: #selector(didChangeVolume(_:)), for: .valueChanged)
         return slider
     }()
@@ -48,7 +53,8 @@ class AudioPlayViewController: UIViewController {
         slider.minimumValue = 0
         slider.maximumValue = 1
         slider.value = 0.5
-        slider.tintColor = .black
+        slider.tintColor = .primary
+        slider.thumbTintColor = .primary
         slider.addTarget(self, action: #selector(didChangeSecondaryVolume(_:)), for: .valueChanged)
         return slider
     }()
@@ -63,9 +69,37 @@ class AudioPlayViewController: UIViewController {
         collectionView.backgroundColor = .clear
         return collectionView
     }()
+    private lazy var dummyButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "trash.square.fill"), for: .normal)
+        button.tintColor = .primary
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(didSelectDummyButton), for: .touchUpInside)
+        return button
+    }()
+    private lazy var volumeIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "speaker.wave.2.fill")
+        imageView.tintColor = .primary
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapVolumeIcon)))
+        return imageView
+    }()
     private var player: AVAudioPlayer!
-    private lazy var players: [AVAudioPlayer?] = Array(repeating: nil, count: options.count)
-    private let options: [Options] = [.init(title: "Nature"), .init(title: "Bird"), .init(title: "Water"), .init(title: "City"), .init(title: "Forest"), .init(title: "Garden")]
+    private lazy var players: [AVAudioPlayer?] = Array(
+        repeating: nil,
+        count: options.count
+    )
+    private let options: [Options] = [
+        .init(title: "Nature"),
+        .init(title: "Bird"),
+        .init(title: "Water"),
+        .init(title: "City"),
+        .init(title: "Forest"),
+        .init(title: "Garden")
+    ]
+    private var isMuted = false
     
     // MARK: - Overridden Functions
     override func viewDidLoad() {
@@ -77,12 +111,15 @@ class AudioPlayViewController: UIViewController {
     
     // MARK: - Functions
     private func setupUI() {
-        view.backgroundColor = .systemMint
+        view.addGradient(colors: [.secondary, .midGradient, .background], locations: [0.0, 0.6, 1.0])
+        view.backgroundColor = .background
         view.addSubview(backButton)
         view.addSubview(playPauseButton)
         view.addSubview(volumeSlider)
         view.addSubview(secondaryVolumeSlider)
         view.addSubview(collectionView)
+        view.addSubview(dummyButton)
+        view.addSubview(volumeIcon)
         
         NSLayoutConstraint.activate([
             backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16.autoSized),
@@ -109,6 +146,16 @@ class AudioPlayViewController: UIViewController {
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20.widthRatio),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20.widthRatio),
+            
+            dummyButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16.autoSized),
+            dummyButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16.widthRatio),
+            dummyButton.widthAnchor.constraint(equalToConstant: 44.widthRatio),
+            dummyButton.heightAnchor.constraint(equalToConstant: 44.autoSized),
+            
+            volumeIcon.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            volumeIcon.leadingAnchor.constraint(equalTo: playPauseButton.trailingAnchor, constant: 16.widthRatio),
+            volumeIcon.widthAnchor.constraint(equalToConstant: 24.widthRatio),
+            volumeIcon.heightAnchor.constraint(equalToConstant: 24.autoSized),
         ])
     }
     private func setupAudioSession() {
@@ -116,10 +163,19 @@ class AudioPlayViewController: UIViewController {
     }
     private func playInitialAudio() {
         guard let fileName = audioFileName else { return }
-        playAudio(fileName: fileName, forPlayer: &player)
+        playAudio(
+            fileName: fileName,
+            forPlayer: &player
+        )
     }
-    private func playAudio(fileName: String, forPlayer player: inout AVAudioPlayer?) {
-        guard let url = Bundle.main.url(forResource: fileName, withExtension: "mp3") else {
+    private func playAudio(
+        fileName: String,
+        forPlayer player: inout AVAudioPlayer?
+    ) {
+        guard let url = Bundle.main.url(
+            forResource: fileName,
+            withExtension: "mp3"
+        ) else {
             print("Audio file not found")
             return
         }
@@ -132,11 +188,27 @@ class AudioPlayViewController: UIViewController {
         }
     }
     private func playSound(for index: Int) {
+        let option = options[index].title.lowercased()
+        
+        // Check if the tapped audio is already playing
         if let player = players[index], player.isPlaying {
+            // Pause the currently playing audio for this cell
+            print("Pausing audio for option: \(option)")
             player.pause()
         } else {
+            // Stop, reset, and play all other audio players from the beginning
+            for (i, otherPlayer) in players.enumerated() {
+                if let otherPlayer = otherPlayer {
+                    // Stop and reset other players
+                    print("Stopping and resetting audio for option: \(options[i].title.lowercased())")
+                    otherPlayer.stop() // Stop the audio
+                    otherPlayer.currentTime = 0 // Reset to the beginning
+                    otherPlayer.play() // Start the audio again from the beginning
+                }
+            }
+            // Create or reset the player for the tapped audio
             if players[index] == nil {
-                let option = options[index].title.lowercased()
+                // Create a new player for the tapped audio
                 guard let url = Bundle.main.url(forResource: option, withExtension: "mp3") else {
                     print("Audio file not found for option: \(option)")
                     return
@@ -145,12 +217,38 @@ class AudioPlayViewController: UIViewController {
                     let newPlayer = try AVAudioPlayer(contentsOf: url)
                     newPlayer.volume = secondaryVolumeSlider.value
                     players[index] = newPlayer
-                    newPlayer.play()
+                    newPlayer.play()  // Play the new audio
+                    print("Playing new audio for option: \(option)")
                 } catch {
                     print("Error initializing player for option \(option): \(error.localizedDescription)")
                 }
             } else {
+                // If the player exists, reset it to the beginning and play
+                players[index]?.currentTime = 0
                 players[index]?.play()
+                print("Playing audio for option: \(option) from the beginning.")
+            }
+        }
+    }
+    private func printCurrentlyPlayingAudios() {
+        var currentlyPlaying: [String] = []
+        
+        for (index, player) in players.enumerated() {
+            if let player = player, player.isPlaying {
+                let optionTitle = options[index].title
+                let currentTime = player.currentTime
+                let formattedTime = String(format: "%.2f", currentTime) // Format timestamp to 2 decimal places
+                currentlyPlaying.append("\(optionTitle): Playing at \(formattedTime) seconds")
+            }
+        }
+        
+        // Print the currently playing audios
+        if currentlyPlaying.isEmpty {
+            print("No audios are currently playing.")
+        } else {
+            print("Currently Playing Audios:")
+            for audio in currentlyPlaying {
+                print(audio)
             }
         }
     }
@@ -164,6 +262,13 @@ class AudioPlayViewController: UIViewController {
     
     // MARK: - Selectors
     @objc private func didTapPlayPauseButton() {
+        UIView.animate(withDuration: 0.1) {
+            self.playPauseButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.playPauseButton.transform = .identity
+            }
+        }
         if let player = player, player.isPlaying {
             player.pause()
         } else {
@@ -180,6 +285,37 @@ class AudioPlayViewController: UIViewController {
     @objc private func didChangeSecondaryVolume(_ sender: UISlider) {
         players.forEach { $0?.volume = sender.value }  // Update volume for all players in collection view
     }
+    @objc private func didSelectDummyButton() {
+        printCurrentlyPlayingAudios()
+    }
+    @objc private func didTapVolumeIcon() {
+        isMuted.toggle()
+        
+        // Update icon for volume toggle
+        let iconName = isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill"
+        UIView.transition(with: volumeIcon, duration: 0.2, options: .transitionCrossDissolve, animations: {
+            self.volumeIcon.image = UIImage(systemName: iconName)
+        }, completion: nil)
+        
+        // Animate the volume icon for visual feedback
+        UIView.animate(withDuration: 0.1, animations: {
+            self.volumeIcon.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.volumeIcon.transform = .identity
+            }
+        }
+        
+        // Toggle main player's volume
+        if isMuted {
+            player?.volume = 0
+            players.forEach { $0?.volume = 0 }  // Mute all collection view players
+        } else {
+            player?.volume = volumeSlider.value  // Restore main player volume from slider
+            players.forEach { $0?.volume = secondaryVolumeSlider.value }  // Restore all players in collection view
+        }
+    }
+    
 }
 
 // MARK: - Collection View DataSource & Delegate
@@ -190,6 +326,12 @@ extension AudioPlayViewController: UICollectionViewDataSource, UICollectionViewD
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: OptionsCollectionViewCell.collectionViewIdentifier, for: indexPath) as! OptionsCollectionViewCell
         cell.options = options[indexPath.item]
+        cell.layer.cornerRadius = 12
+        cell.contentView.layer.cornerRadius = 12
+        cell.layer.shadowColor = UIColor.primary.cgColor
+        cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+        cell.layer.shadowOpacity = 0.1
+        cell.layer.shadowRadius = 4
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {

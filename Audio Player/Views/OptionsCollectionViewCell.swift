@@ -12,7 +12,10 @@ class OptionsCollectionViewCell: UICollectionViewCell {
     
     // MARK: - Variables
     static let collectionViewIdentifier = "Cell"
-    private let containerView = View(backgroundColor: .dimWhite, cornerRadius: 20)
+    private let containerView = View(
+        backgroundColor: .dimWhite,
+        cornerRadius: 20
+    )
     private let optionsTitle = Label(text: "A")
     var options: Options? {
         didSet {

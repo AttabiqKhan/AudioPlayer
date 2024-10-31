@@ -86,11 +86,18 @@ class AudioPlayViewController: UIViewController {
         imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapVolumeIcon)))
         return imageView
     }()
+    private lazy var mixButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("Mix", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .primary
+        button.layer.cornerRadius = 8
+        button.addTarget(self, action: #selector(didTapMixButton), for: .touchUpInside)
+        return button
+    }()
     private var player: AVAudioPlayer!
-    private lazy var players: [AVAudioPlayer?] = Array(
-        repeating: nil,
-        count: options.count
-    )
+    private lazy var players: [AVAudioPlayer?] = Array(repeating: nil, count: options.count)
     private let options: [Options] = [
         .init(title: "Nature"),
         .init(title: "Bird"),
@@ -100,12 +107,17 @@ class AudioPlayViewController: UIViewController {
         .init(title: "Garden")
     ]
     private var isMuted = false
+    private var isRecordingMix = false
+    private var mixEngine: AVAudioEngine?
+    private var mixerNode: AVAudioMixerNode?
+    private var audioFile: AVAudioFile?
     
     // MARK: - Overridden Functions
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupAudioSession()
+        setupAudioEngine()
         playInitialAudio()
     }
     
@@ -120,6 +132,7 @@ class AudioPlayViewController: UIViewController {
         view.addSubview(collectionView)
         view.addSubview(dummyButton)
         view.addSubview(volumeIcon)
+        view.addSubview(mixButton)
         
         NSLayoutConstraint.activate([
             backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16.autoSized),
@@ -156,10 +169,24 @@ class AudioPlayViewController: UIViewController {
             volumeIcon.leadingAnchor.constraint(equalTo: playPauseButton.trailingAnchor, constant: 16.widthRatio),
             volumeIcon.widthAnchor.constraint(equalToConstant: 24.widthRatio),
             volumeIcon.heightAnchor.constraint(equalToConstant: 24.autoSized),
+            
+            mixButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16.autoSized),
+            mixButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            mixButton.widthAnchor.constraint(equalToConstant: 80.widthRatio),
+            mixButton.heightAnchor.constraint(equalToConstant: 44.autoSized),
         ])
     }
     private func setupAudioSession() {
-        try! AVAudioSession.sharedInstance().setCategory(.playback, options: [])
+        //try! AVAudioSession.sharedInstance().setCategory(.playback, options: [])
+        do {
+            try AVAudioSession.sharedInstance().setCategory(
+                .playback,
+                options: [.mixWithOthers, .duckOthers]
+            )
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Error setting up audio session: \(error.localizedDescription)")
+        }
     }
     private func playInitialAudio() {
         guard let fileName = audioFileName else { return }
@@ -168,10 +195,7 @@ class AudioPlayViewController: UIViewController {
             forPlayer: &player
         )
     }
-    private func playAudio(
-        fileName: String,
-        forPlayer player: inout AVAudioPlayer?
-    ) {
+    private func playAudio(fileName: String, forPlayer player: inout AVAudioPlayer?) {
         guard let url = Bundle.main.url(
             forResource: fileName,
             withExtension: "mp3"
@@ -181,6 +205,7 @@ class AudioPlayViewController: UIViewController {
         }
         do {
             player = try AVAudioPlayer(contentsOf: url)
+            player?.numberOfLoops = -1
             player?.volume = volumeSlider.value
             player?.play()
         } catch {
@@ -188,13 +213,17 @@ class AudioPlayViewController: UIViewController {
         }
     }
     private func playSound(for index: Int) {
+        player.stop()
+        player.currentTime = 0
         let option = options[index].title.lowercased()
         
         // Check if the tapped audio is already playing
         if let player = players[index], player.isPlaying {
             // Pause the currently playing audio for this cell
             print("Pausing audio for option: \(option)")
-            player.pause()
+            player.stop()
+            players[index] = nil
+            return
         } else {
             // Stop, reset, and play all other audio players from the beginning
             for (i, otherPlayer) in players.enumerated() {
@@ -215,8 +244,10 @@ class AudioPlayViewController: UIViewController {
                 }
                 do {
                     let newPlayer = try AVAudioPlayer(contentsOf: url)
+                    newPlayer.numberOfLoops = -1
                     newPlayer.volume = secondaryVolumeSlider.value
                     players[index] = newPlayer
+                    newPlayer.volume = isMuted ? 0 : secondaryVolumeSlider.value
                     newPlayer.play()  // Play the new audio
                     print("Playing new audio for option: \(option)")
                 } catch {
@@ -224,14 +255,20 @@ class AudioPlayViewController: UIViewController {
                 }
             } else {
                 // If the player exists, reset it to the beginning and play
-                players[index]?.currentTime = 0
+                //players[index]?.currentTime = 0
                 players[index]?.play()
                 print("Playing audio for option: \(option) from the beginning.")
             }
         }
+        player.play()
     }
     private func printCurrentlyPlayingAudios() {
         var currentlyPlaying: [String] = []
+        
+        if let mainPlayer = player, mainPlayer.isPlaying {
+            let formattedTime = String(format: "%.2f", mainPlayer.currentTime)
+            currentlyPlaying.append("Main Audio (\(audioFileName ?? "Unknown")): Playing at \(formattedTime) seconds")
+        }
         
         for (index, player) in players.enumerated() {
             if let player = player, player.isPlaying {
@@ -258,6 +295,119 @@ class AudioPlayViewController: UIViewController {
         } else {
             playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
         }
+    }
+    // Add these new functions for mixing functionality
+    private func setupAudioEngine() {
+        mixEngine = AVAudioEngine()
+        mixerNode = AVAudioMixerNode()
+        
+        guard let engine = mixEngine, let mixer = mixerNode else { return }
+        
+        engine.attach(mixer)
+        engine.connect(mixer, to: engine.mainMixerNode, format: nil)
+        
+        try? engine.start()
+    }
+    private func startMixing() {
+            guard let engine = mixEngine else { return }
+            
+            // Create directory for saving mixed audio if it doesn't exist
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let mixesDirectory = documentsPath.appendingPathComponent("AudioMixes")
+            
+            do {
+                try FileManager.default.createDirectory(at: mixesDirectory, withIntermediateDirectories: true)
+            } catch {
+                print("Failed to create directory: \(error.localizedDescription)")
+                return
+            }
+            
+            // Create unique filename with timestamp
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+            let timestamp = dateFormatter.string(from: Date())
+            let mixFileName = "mix_\(timestamp).mp4"
+            let mixFileUrl = mixesDirectory.appendingPathComponent(mixFileName)
+            
+            // Set up audio file
+            let settings: [String: Any] = [
+                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVSampleRateKey: 44100.0,
+                AVNumberOfChannelsKey: 2,
+                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            ]
+            
+            do {
+                audioFile = try AVAudioFile(forWriting: mixFileUrl, settings: settings)
+                
+                // Start the audio engine
+                engine.prepare()
+                try engine.start()
+                
+                // Install tap on main mixer node
+                engine.mainMixerNode.installTap(onBus: 0, bufferSize: 4096, format: nil) { [weak self] buffer, time in
+                    do {
+                        try self?.audioFile?.write(from: buffer)
+                    } catch {
+                        print("Error writing buffer to file: \(error.localizedDescription)")
+                    }
+                }
+                
+            } catch {
+                print("Error setting up audio file: \(error.localizedDescription)")
+                return
+            }
+            
+            // Example delay before stopping
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                self?.stopMixing()
+                
+                // Check if file was created successfully
+                if FileManager.default.fileExists(atPath: mixFileUrl.path) {
+                    print("Mix file saved successfully at \(mixFileUrl)")
+                } else {
+                    print("Failed to save mix file.")
+                }
+            }
+        }
+    private func stopMixing() {
+            
+            mixEngine?.mainMixerNode.removeTap(onBus: 0)
+            audioFile = nil
+            
+            // Show success alert
+            let alert = UIAlertController(
+                title: "Mix Saved",
+                message: "Your audio mix has been saved to the device",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { [weak self] _ in
+                // Assuming mixFileUrl is accessible here or pass it in as an argument
+                if let mixFileUrl = self?.audioFile?.url {
+                    self?.shareAudioFile(at: mixFileUrl)
+                }
+            }))
+            present(alert, animated: true)
+        }
+    private func shareAudioFile(at url: URL) {
+        let documentController = UIDocumentInteractionController(url: url)
+        documentController.uti = "public.mpeg-4-audio"
+        documentController.presentOptionsMenu(from: view.bounds, in: self.view, animated: true)
+    }
+    private func getPlayingAudioCount() -> Int {
+        var count = 0
+        
+        // Check main player
+        if let mainPlayer = player, mainPlayer.isPlaying {
+            count += 1
+        }
+        // Check collection view players
+        for player in players {
+            if let player = player, player.isPlaying {
+                count += 1
+            }
+        }
+        return count
     }
     
     // MARK: - Selectors
@@ -291,13 +441,11 @@ class AudioPlayViewController: UIViewController {
     @objc private func didTapVolumeIcon() {
         isMuted.toggle()
         
-        // Update icon for volume toggle
         let iconName = isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill"
         UIView.transition(with: volumeIcon, duration: 0.2, options: .transitionCrossDissolve, animations: {
             self.volumeIcon.image = UIImage(systemName: iconName)
         }, completion: nil)
         
-        // Animate the volume icon for visual feedback
         UIView.animate(withDuration: 0.1, animations: {
             self.volumeIcon.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         }) { _ in
@@ -305,17 +453,43 @@ class AudioPlayViewController: UIViewController {
                 self.volumeIcon.transform = .identity
             }
         }
-        
         // Toggle main player's volume
         if isMuted {
             player?.volume = 0
             players.forEach { $0?.volume = 0 }  // Mute all collection view players
         } else {
             player?.volume = volumeSlider.value  // Restore main player volume from slider
-            players.forEach { $0?.volume = secondaryVolumeSlider.value }  // Restore all players in collection view
+            players.forEach { $0?.volume = secondaryVolumeSlider.value  }  // Restore all players in collection view
+        }
+    }
+    @objc private func didTapMixButton() {
+        let playingCount = getPlayingAudioCount()
+        
+        if playingCount < 2 {
+            let alert = UIAlertController(
+                title: "Cannot Create Mix",
+                message: "Please play at least two audio tracks to create a mix.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        isRecordingMix.toggle()
+        
+        if isRecordingMix {
+            mixButton.backgroundColor = .midGradient
+            mixButton.setTitle("Stop", for: .normal)
+            startMixing()
+        } else {
+            mixButton.backgroundColor = .primary
+            mixButton.setTitle("Mix", for: .normal)
+            stopMixing()
         }
     }
     
+
 }
 
 // MARK: - Collection View DataSource & Delegate
